@@ -13,13 +13,12 @@ class FileStorage:
         if cls is None:
             return self.__objects
 
-        objects = {}
-        for key, value in self.__objects.items():
-            if cls == value.__class__ or cls == value.__class__.__name__:
-                objects[key] = value
-        return objects
-
-        return objects
+        else:
+            instances = {}
+            for key, value in self.__objects.items():
+                if value.__class__ == cls:
+                    instances[key] = value
+            return instances
 
     def new(self, obj):
         """Adds new object to storage dictionary"""
@@ -36,13 +35,13 @@ class FileStorage:
 
     def reload(self):
         """Loads storage dictionary from file"""
-        from models.base_model import BaseModel
-        from models.user import User
-        from models.place import Place
-        from models.state import State
-        from models.city import City
         from models.amenity import Amenity
+        from models.base_model import BaseModel
+        from models.city import City
+        from models.place import Place
         from models.review import Review
+        from models.state import State
+        from models.user import User
 
         classes = {
                     'BaseModel': BaseModel, 'User': User, 'Place': Place,
@@ -55,18 +54,19 @@ class FileStorage:
                 temp = json.load(f)
                 for key, val in temp.items():
                     self.all()[key] = classes[val['__class__']](**val)
-        except Exception:
+        except FileNotFoundError:
             pass
 
     def delete(self, obj=None):
-        if obj:
-            name = obj.__class__.__name__
-            id = obj.id
-            key = name + '.' + id
-            if key in self.__objects:
-                del self.__objects[key]
-                # self.save()
+        """ delete a object """
+        if obj is not None:
+            for key, value in self.__objects.items():
+                if value == obj:
+                    del self.__objects[key]
+                    break
 
     def close(self):
-        """ call remove() method for deserializing the JSON file to object """
+        """
+        Call the reload method
+        """
         self.reload()
